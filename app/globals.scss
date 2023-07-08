@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+:root {
+	/* --foreground-rgb: 0, 0, 0; */
+	--background-start-rgb: 214, 219, 220;
+	--background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--foreground-rgb: 255, 255, 255;
+		--background-start-rgb: 15, 15, 15;
+		--background-end-rgb: 15, 15, 15;
+	}
+}
+
+body {
+	color: rgb(var(--foreground-rgb));
+	min-height: 100vh;
+	// background: linear-gradient(to bottom,
+	//     transparent,
+	//     rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+	background-color: rgb(15, 15, 15);
+	background-size: 90px 90px;
+	background-image: radial-gradient(circle, rgb(66, 66, 66) 1px, rgba(0, 0, 0, 0) 1px); // repeating dots
+	// background-image: // grid lines
+	//   linear-gradient(to right, rgb(30, 30, 30) 1px, transparent 1px),
+	//   linear-gradient(to bottom, rgb(30, 30, 30) 1px, transparent 1px);
+	background-position: -20px -20px;
+	// background: linear-gradient(177.9deg, rgb(38, 39, 43) 3.6%, rgb(23, 23, 24) 105.8%);
+
+	font-family: 'Inter', sans-serif !important;
+}
+
+.bg-gradient {
+	background: linear-gradient(-225deg, #AC32E4 0%, #7918F2 48%, #4801FF 100%);
+}
+
+.text-gradient {
+	background: linear-gradient(-225deg, #AC32E4 0%, #7918F2 48%, #4801FF 100%);
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+.border-gradient {
+	&:after {
+		content: '';
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		z-index: -1;
+		margin: -2px;
+		border-radius: 9999px;
+		background-image: linear-gradient(-225deg, rgba(172, 50, 228, 1) 0%, rgba(121, 24, 242, 1) 48%, rgba(72, 1, 255, 1) 100%);
+	}
+}
+
+.clickBounce {
+	animation: clickBounce 0.2s 1;
+}
+
+@keyframes clickBounce {
+	50% {
+		transform: scale(0.9);
+	}
+
+	100% {
+		transform: scale(1);
+	}
+}
+
+// datalist {
+// 	position: absolute;
+// 	background-color: white;
+// 	border: 1px solid blue;
+// 	border-radius: 0 0 5px 5px;
+// 	border-top: none;
+// 	font-family: sans-serif;
+// 	width: 350px;
+// 	padding: 5px;
+// 	box-shadow: 0 0 20px black;
+// }
+
+// option {
+// 	background-color: white;
+// 	padding: 4px;
+// 	color: blue;
+// 	margin-bottom: 1px;
+// 	font-size: 18px;
+// 	cursor: pointer;
+// }
+// option:hover, .active{
+// 	background-color: lightblue;
+// }
+  
