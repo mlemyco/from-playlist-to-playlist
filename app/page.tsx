@@ -10,9 +10,9 @@ import { CredentialResponse, GoogleOAuthProvider, useGoogleLogin } from '@react-
 import GoogleLogin from './components/googleLogin';
 import axios from 'axios';
 
-const SPOTIFY_CLIENT_ID = "fe857598d4c34d3ca6482dcc931e6a4f"
-const YOUTUBE_CLIENT_ID = "697515204862-mnj2nvbj1aurd2ldodlf1tucqk87es00.apps.googleusercontent.com"
-const YOUTUBE_API_KEY = "AIzaSyDsSie6blHr8jCOflrsCaAFg8b8xM3syco"
+const SPOTIFY_CLIENT_ID = ""
+const YOUTUBE_CLIENT_ID = ""
+const YOUTUBE_API_KEY = ""
 
 const spotify = new SpotifyWebApi();
 
