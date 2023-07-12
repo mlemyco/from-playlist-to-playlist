@@ -2,7 +2,7 @@ import React from 'react';
 
 const authEndpoint = "https://accounts.spotify.com/authorize"
 const redirectUri = "http://localhost:3000/"
-const clientId = "fe857598d4c34d3ca6482dcc931e6a4f"
+const clientId = ""
 const scopes =  [
     'user-read-private',
     'user-read-email',
