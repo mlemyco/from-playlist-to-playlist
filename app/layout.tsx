@@ -1,23 +1,26 @@
 import './globals.scss'
 import { Inter } from 'next/font/google'
-import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'From Playlist To Playlist',
-  description: 'Transfer songs from a Spotify playlist to a YouTube playlist and vice versa!',
+    title: 'From Playlist To Playlist',
+    description: 'Transfer songs from a Spotify playlist to a YouTube playlist and vice versa!',
 }
 
 export default function RootLayout({
-  children,
+    children,
 }: {
-  children: React.ReactNode
+    children: React.ReactNode
 }) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
-      <script src="https://kit.fontawesome.com/315845a82f.js" crossOrigin="anonymous"></script>
-    </html>
-  )
+    return (
+        <html lang="en">
+            <body className={inter.className}>
+                {children}
+                
+                <script src="https://kit.fontawesome.com/315845a82f.js" crossOrigin="anonymous"></script>
+                {/* <script src="https://accounts.google.com/gsi/client" async></script> */}
+            </body>
+        </html>
+    )
 }
