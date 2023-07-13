@@ -10,9 +10,9 @@ import { CredentialResponse, GoogleOAuthProvider, useGoogleLogin } from '@react-
 import GoogleLogin from './components/googleLogin';
 import axios from 'axios';
 
-const SPOTIFY_CLIENT_ID = "fe857598d4c34d3ca6482dcc931e6a4f"
-const YOUTUBE_CLIENT_ID = "697515204862-mnj2nvbj1aurd2ldodlf1tucqk87es00.apps.googleusercontent.com"
-const YOUTUBE_API_KEY = "AIzaSyDsSie6blHr8jCOflrsCaAFg8b8xM3syco"
+const SPOTIFY_CLIENT_ID = ""
+const YOUTUBE_CLIENT_ID = ""
+const YOUTUBE_API_KEY = ""
 
 const spotify = new SpotifyWebApi();
 
@@ -96,14 +96,6 @@ export default function Home() {
 			}).then((response) => {
 				const playlists = response.data.items
 
-				console.log("before extraction:", playlists)
-
-				// const actualPlaylists = playlists.map((item: any) => {
-				// 	return item.snippet
-				// })
-
-				console.log("youtube playlists:", playlists)
-
 				const newState = {
 					...rightState,
 					playlists: playlists,
@@ -154,6 +146,126 @@ export default function Home() {
 		}
 	}, [spotifyAccessToken]);
 
+
+
+	const getYoutubeSongs = (playlistId: string) => {
+		return axios.get(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=id%2Csnippet&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}`, {
+			headers: {
+				Authorization: `Bearer ${youtubeUser.access_token}`,
+				Accept: 'application/json'
+			}
+		}).then((response) => {
+			const tracks = response.data.items
+
+			console.log("youtube tracks:", tracks)
+
+			return tracks
+		}).catch((err) => console.log(err))
+	}
+
+	const checkYoutubeIfVidExists = async (playlistId: string, videoId: string) => {
+		return getYoutubeSongs(playlistId).then((tracks) => {
+			tracks.forEach((track: YoutubeTrack) => {
+				const otherVideoId = track.snippet.resourceId.videoId
+				console.log("checking track:", otherVideoId)
+
+				// if the video is already in the playlist, don't add
+				if (videoId == otherVideoId) {
+					console.log("video exists!")
+					return true
+				}
+			})
+			return false
+		})
+	}
+
+	const addToYoutube = async (playlistId: string, videoId: string) => {
+		console.log("checking against", videoId)
+
+		// TODO: exists does not equal false even if console.logged(video exists) (line 174)
+		const exists = await checkYoutubeIfVidExists(playlistId, videoId)
+		console.log("exists:", exists)
+		if (exists) return
+
+		// TODO: if the youtube id is already in the youtube playlist, dont add
+		axios.post(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&key=${YOUTUBE_API_KEY}`, {
+			"snippet": {
+				"playlistId": playlistId,
+				"resourceId": {
+					"kind": "youtube#video",
+					"videoId": videoId
+				}
+			}
+		}, {
+			headers: {
+				Authorization: `Bearer ${youtubeUser.access_token}`,
+				Accept: 'application/json',
+				'Content-Type': 'application/json'
+			}
+		}).then((response) => {
+			console.log("added song:", response)
+		})
+	}
+
+	const searchYoutube = async (songInfo: string) => {
+		const songQuery = songInfo.replaceAll(" ", "%20")
+
+		return axios.get(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${songQuery}&type=video&key=${YOUTUBE_API_KEY}`, {
+			headers: {
+				Authorization: `Bearer ${youtubeUser.access_token}`,
+				Accept: 'application/json'
+			}
+		}).then((response) => {
+			const searchResult = response.data.items[0]
+
+			console.log("youtube search result:", searchResult)
+
+			return searchResult
+		}).catch((err) => console.log(err))
+	}
+
+	const transferSpotifySongs = () => {
+		const spotifyPlaylistId = leftState.inputPlaylist.id
+		
+		spotify.getPlaylistTracks(spotifyPlaylistId).then((response) => {
+			const tracks = response.items
+			console.log("spotify tracks:", tracks)
+
+			tracks.forEach((track: any) => {
+				const artist: string = track.track.artists[0].name
+				const songName: string = track.track.name
+				const songInfo: string = artist.concat(" ", songName)
+
+				searchYoutube(songInfo).then((searchResult) => {
+					addToYoutube(rightState.inputPlaylist.id, searchResult.id.videoId)
+				})
+			})
+		})
+	}
+
+	const handleTransfer = (button: HTMLButtonElement) => {
+		clickBounce(button)
+
+		if (leftState.platform == "spotify") { // direction = 's2y'
+			// from spotify
+			transferSpotifySongs()
+
+			// to youtube
+			const youtubePlaylistId = rightState.inputPlaylist.id
+			// getYoutubeSongs(youtubePlaylistId)
+
+		} else { // direction = 'y2s'
+			// from youtube
+			const youtubePlaylistId = leftState.inputPlaylist.id
+			getYoutubeSongs(youtubePlaylistId)
+
+			// to spotify
+			// const spotifyPlaylistId = rightState.inputPlaylist.id
+			// transferSpotifySongs(spotifyPlaylistId)
+		}
+	}
+
+
 	const clickBounce = (button: HTMLButtonElement) => {
 		button.classList.remove('clickBounce')
 		void button.offsetWidth;
@@ -199,7 +311,7 @@ export default function Home() {
 
 				{/* transfer button */}
 				<div className="row-start-5 flex flex-col justify-center items-center">
-					<button className='bg-gradient rounded-full px-8 py-4 font-bold text-xl text-center mb-3' onClick={(e) => { clickBounce(e.currentTarget) }}>Transfer!</button>
+					<button className='bg-gradient rounded-full px-8 py-4 font-bold text-xl text-center mb-3' onClick={(e) => { handleTransfer(e.currentTarget) }}>Transfer!</button>
 
 					<div className="text-gray-600 text-center flex flex-col">
 						{spotifyLoggedIn && spotifyUser ? (
