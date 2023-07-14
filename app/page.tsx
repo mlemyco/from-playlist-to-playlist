@@ -96,11 +96,19 @@ export default function Home() {
 			}).then((response) => {
 				const playlists = response.data.items
 
-				const newState = {
-					...rightState,
-					playlists: playlists,
+				if (rightState.platform == "youtube") {
+					const newState = {
+						...rightState,
+						playlists: playlists,
+					}
+					setRightState(newState)
+				} else {
+					const newState = {
+						...leftState,
+						playlists: playlists,
+					}
+					setLeftState(newState)
 				}
-				setRightState(newState)
 			}).catch((err) => console.log(err))
 		}
 	}, [youtubeUser])
@@ -134,11 +142,13 @@ export default function Home() {
 			spotify.getUserPlaylists().then((actualPlaylists) => {
 				console.log("actual playlists:", actualPlaylists.items)
 
-				const newState = {
-					...leftState,
-					playlists: actualPlaylists.items,
+				if (leftState.platform == "spotify") {
+					const newState = {
+						...leftState,
+						playlists: actualPlaylists.items,
+					}
+					setLeftState(newState)
 				}
-				setLeftState(newState)
 			})
 		} else {
 			setSpotifyLoggedIn(false)
@@ -155,55 +165,54 @@ export default function Home() {
 				Accept: 'application/json'
 			}
 		}).then((response) => {
-			const tracks = response.data.items
+			const videos = response.data.items
 
-			console.log("youtube tracks:", tracks)
+			console.log("youtube videos:", videos)
 
-			return tracks
+			return videos
 		}).catch((err) => console.log(err))
 	}
 
-	const checkYoutubeIfVidExists = async (playlistId: string, videoId: string) => {
-		return getYoutubeSongs(playlistId).then((tracks) => {
-			tracks.forEach((track: YoutubeTrack) => {
-				const otherVideoId = track.snippet.resourceId.videoId
+	const addToYoutube = async (playlistId: string, videoId: string) => {
+		getYoutubeSongs(playlistId).then((videos) => {
+			console.log("checking against", videoId)
+
+			if (!videos) {
+				console.log("Could not find video.")
+				return
+			}
+
+			console.log("videos:", videos)
+
+			for (const video of videos) {
+				const otherVideoId = video.snippet.resourceId.videoId
 				console.log("checking track:", otherVideoId)
 
 				// if the video is already in the playlist, don't add
 				if (videoId == otherVideoId) {
-					console.log("video exists!")
-					return true
+					console.log("video exists, don't add")
+					return
 				}
+			}
+
+			// If the youtube id is already in the youtube playlist, dont add
+			axios.post(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&key=${YOUTUBE_API_KEY}`, {
+				"snippet": {
+					"playlistId": playlistId,
+					"resourceId": {
+						"kind": "youtube#video",
+						"videoId": videoId
+					}
+				}
+			}, {
+				headers: {
+					Authorization: `Bearer ${youtubeUser.access_token}`,
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				}
+			}).then((response) => {
+				console.log("added song:", response)
 			})
-			return false
-		})
-	}
-
-	const addToYoutube = async (playlistId: string, videoId: string) => {
-		console.log("checking against", videoId)
-
-		// TODO: exists does not equal false even if console.logged(video exists) (line 174)
-		const exists = await checkYoutubeIfVidExists(playlistId, videoId)
-		console.log("exists:", exists)
-		if (exists) return
-
-		// TODO: if the youtube id is already in the youtube playlist, dont add
-		axios.post(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&key=${YOUTUBE_API_KEY}`, {
-			"snippet": {
-				"playlistId": playlistId,
-				"resourceId": {
-					"kind": "youtube#video",
-					"videoId": videoId
-				}
-			}
-		}, {
-			headers: {
-				Authorization: `Bearer ${youtubeUser.access_token}`,
-				Accept: 'application/json',
-				'Content-Type': 'application/json'
-			}
-		}).then((response) => {
-			console.log("added song:", response)
 		})
 	}
 
@@ -227,6 +236,7 @@ export default function Home() {
 	const transferSpotifySongs = () => {
 		const spotifyPlaylistId = leftState.inputPlaylist.id
 		
+		// Get spotify songs
 		spotify.getPlaylistTracks(spotifyPlaylistId).then((response) => {
 			const tracks = response.items
 			console.log("spotify tracks:", tracks)
@@ -236,8 +246,51 @@ export default function Home() {
 				const songName: string = track.track.name
 				const songInfo: string = artist.concat(" ", songName)
 
+				// search youtube for first result
 				searchYoutube(songInfo).then((searchResult) => {
+					if (!searchResult) return
+					
+					// add to youtube playlist
 					addToYoutube(rightState.inputPlaylist.id, searchResult.id.videoId)
+				})
+			})
+		})
+	}
+
+	const addToSpotify = async (playlistId: string, trackUri: string) => {
+		spotify.getPlaylistTracks(playlistId).then((response) => {
+			const tracks = response.items
+
+			// If song already exists in playlist, don't add
+			for (const track of tracks) {
+				if (track.track.uri == trackUri) {
+					console.log("song already exists, don't add")
+					return
+				}
+			}
+
+			console.log("adding:", trackUri)
+			spotify.addTracksToPlaylist(playlistId, [trackUri])
+		})
+	}
+
+	const transferYoutubeSongs = () => {
+		const youtubePlaylistId = leftState.inputPlaylist.id
+		const spotifyPlaylistId = rightState.inputPlaylist.id
+
+		// get youtube songs
+		getYoutubeSongs(youtubePlaylistId).then((videos) => {
+			console.log("youtube videos:", videos)
+
+			videos.forEach((video: any) => {
+				const videoTitle = video.snippet.title
+
+				// search spotify for first result
+				spotify.search(videoTitle, ["track"]).then((response) => {
+					const searchResultUri = response.tracks!.items[0].uri
+
+					// add to spotify playlist
+					addToSpotify(spotifyPlaylistId, searchResultUri)
 				})
 			})
 		})
@@ -246,22 +299,17 @@ export default function Home() {
 	const handleTransfer = (button: HTMLButtonElement) => {
 		clickBounce(button)
 
-		if (leftState.platform == "spotify") { // direction = 's2y'
-			// from spotify
+		if (leftState.inputPlaylist == null || leftState.inputPlaylist == null) {
+			console.log("Please select a playlist.")
+			return
+		}
+
+		if (leftState.platform == "spotify") {
+			// from spotify to youtube
 			transferSpotifySongs()
-
-			// to youtube
-			const youtubePlaylistId = rightState.inputPlaylist.id
-			// getYoutubeSongs(youtubePlaylistId)
-
-		} else { // direction = 'y2s'
-			// from youtube
-			const youtubePlaylistId = leftState.inputPlaylist.id
-			getYoutubeSongs(youtubePlaylistId)
-
-			// to spotify
-			// const spotifyPlaylistId = rightState.inputPlaylist.id
-			// transferSpotifySongs(spotifyPlaylistId)
+		} else {
+			// from youtube to spotify
+			transferYoutubeSongs()
 		}
 	}
 
@@ -317,7 +365,7 @@ export default function Home() {
 						{spotifyLoggedIn && spotifyUser ? (
 							<div>Logged in as {spotifyUser.display_name}</div>
 						) : (
-							<SpotifyLogin />
+							<SpotifyLogin clientId={SPOTIFY_CLIENT_ID} />
 						)}
 
 						{youtubeLoggedIn && youtubeProfile ? (
