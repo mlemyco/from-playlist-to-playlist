@@ -20,7 +20,7 @@ export default function RootLayout({
                 
                 {children}
                 
-                <script src="https://kit.fontawesome.com/315845a82f.js" crossOrigin="anonymous" async ></script>
+                <Script src="https://kit.fontawesome.com/315845a82f.js" crossOrigin="anonymous"></Script>
                 {/* <script src="https://accounts.google.com/gsi/client" async></script> */}
             </body>
         </html>
