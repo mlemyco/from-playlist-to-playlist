@@ -1,7 +1,7 @@
 import React from 'react';
 
 const authEndpoint = "https://accounts.spotify.com/authorize"
-const redirectUri = "http://localhost:3000/"
+const redirectUri = "https://from-playlist-to-playlist.vercel.app/"
 const scopes =  [
     'user-read-private',
     'user-read-email',
