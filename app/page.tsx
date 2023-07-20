@@ -1,37 +1,25 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { useAnimate } from 'framer-motion';
+require('dotenv').config()
+
+import React, { useEffect, useState } from 'react';
 import Platform from './components/platform'
 import SpotifyWebApi from 'spotify-web-api-js';
 import SpotifyLogin from './components/spotifyLogin';
-// import YoutubeLogin from './components/youtubeLogin'
-import { CredentialResponse, GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import GoogleLogin from './components/googleLogin';
-import axios from 'axios';
+import YoutubeAPI from '@/lib/youtube';
 
-const SPOTIFY_CLIENT_ID = ""
-const YOUTUBE_CLIENT_ID = ""
-const YOUTUBE_API_KEY = ""
+const SPOTIFY_CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID
+const YOUTUBE_CLIENT_ID = process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID
+
+console.log(SPOTIFY_CLIENT_ID)
+console.log(YOUTUBE_CLIENT_ID)
 
 const spotify = new SpotifyWebApi();
-
-
-// var spotifyPlaylists = [
-// 	{ name: "*w*" }, 
-// 	{ name: "da moosik" }, 
-// ];
-
-// var youtubePlaylists = [
-// 	{ name: "close ur eyes" }, 
-// 	{ name: "in a dream" }
-// ];
+const youtube = new YoutubeAPI();
 
 const getParamsFromUrl = () => {
-	// const router = useRouter()
-	// const accessToken = router.query.accessToken
-	// console.log(accessToken)
-	// return accessToken
 	return window.location.hash
 		.substring(1)
 		.split('&')
@@ -73,13 +61,10 @@ export default function Home() {
 
 	useEffect(() => {
 		if (youtubeUser) {
+			youtube.setAccessToken(youtubeUser.access_token)
+
 			// Get current user's youtube channel
-			axios.get(`https://youtube.googleapis.com/youtube/v3/channels?part=snippet%2CcontentDetails%2Cstatistics&mine=true&key=${YOUTUBE_API_KEY}`, {
-				headers: {
-					Authorization: `Bearer ${youtubeUser.access_token}`,
-					Accept: 'application/json'
-				}
-			}).then((response) => {
+			youtube.getCurrentChannel().then((response) => {
 				const actualUserChannel = response.data.items[0].snippet
 				console.log("current user's channel:", actualUserChannel.title)
 
@@ -88,12 +73,7 @@ export default function Home() {
 			})
 
 			// Get current user's playlists
-			axios.get(`https://youtube.googleapis.com/youtube/v3/playlists?part=snippet%2CcontentDetails&maxResults=25&mine=true&key=${YOUTUBE_API_KEY}`, {
-				headers: {
-					Authorization: `Bearer ${youtubeUser.access_token}`,
-					Accept: 'application/json'
-				}
-			}).then((response) => {
+			youtube.getPlaylists().then((response) => {
 				const playlists = response.data.items
 
 				if (rightState.platform == "youtube") {
@@ -139,7 +119,7 @@ export default function Home() {
 				console.log("user:", user)
 				setSpotifyUser(user)
 			})
-			spotify.getUserPlaylists().then((actualPlaylists) => {
+			spotify.getUserPlaylists(undefined, { limit: 50 }).then((actualPlaylists) => {
 				console.log("actual playlists:", actualPlaylists.items)
 
 				if (leftState.platform == "spotify") {
@@ -158,80 +138,6 @@ export default function Home() {
 
 
 
-	const getYoutubeSongs = (playlistId: string) => {
-		return axios.get(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=id%2Csnippet&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}`, {
-			headers: {
-				Authorization: `Bearer ${youtubeUser.access_token}`,
-				Accept: 'application/json'
-			}
-		}).then((response) => {
-			const videos = response.data.items
-
-			console.log("youtube videos:", videos)
-
-			return videos
-		}).catch((err) => console.log(err))
-	}
-
-	const addToYoutube = async (playlistId: string, videoId: string) => {
-		getYoutubeSongs(playlistId).then((videos) => {
-			console.log("checking against", videoId)
-
-			if (!videos) {
-				console.log("Could not find video.")
-				return
-			}
-
-			console.log("videos:", videos)
-
-			for (const video of videos) {
-				const otherVideoId = video.snippet.resourceId.videoId
-				console.log("checking track:", otherVideoId)
-
-				// if the video is already in the playlist, don't add
-				if (videoId == otherVideoId) {
-					console.log("video exists, don't add")
-					return
-				}
-			}
-
-			// If the youtube id is already in the youtube playlist, dont add
-			axios.post(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&key=${YOUTUBE_API_KEY}`, {
-				"snippet": {
-					"playlistId": playlistId,
-					"resourceId": {
-						"kind": "youtube#video",
-						"videoId": videoId
-					}
-				}
-			}, {
-				headers: {
-					Authorization: `Bearer ${youtubeUser.access_token}`,
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				}
-			}).then((response) => {
-				console.log("added song:", response)
-			})
-		})
-	}
-
-	const searchYoutube = async (songInfo: string) => {
-		const songQuery = songInfo.replaceAll(" ", "%20")
-
-		return axios.get(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${songQuery}&type=video&key=${YOUTUBE_API_KEY}`, {
-			headers: {
-				Authorization: `Bearer ${youtubeUser.access_token}`,
-				Accept: 'application/json'
-			}
-		}).then((response) => {
-			const searchResult = response.data.items[0]
-
-			console.log("youtube search result:", searchResult)
-
-			return searchResult
-		}).catch((err) => console.log(err))
-	}
 
 	const transferSpotifySongs = () => {
 		const spotifyPlaylistId = leftState.inputPlaylist.id
@@ -240,18 +146,18 @@ export default function Home() {
 		spotify.getPlaylistTracks(spotifyPlaylistId).then((response) => {
 			const tracks = response.items
 			console.log("spotify tracks:", tracks)
-
+	
 			tracks.forEach((track: any) => {
 				const artist: string = track.track.artists[0].name
 				const songName: string = track.track.name
-				const songInfo: string = artist.concat(" ", songName)
-
+				const songQuery: string = artist.concat("%20", songName)
+	
 				// search youtube for first result
-				searchYoutube(songInfo).then((searchResult) => {
+				youtube.searchYoutube(songQuery).then((searchResult) => {
 					if (!searchResult) return
 					
 					// add to youtube playlist
-					addToYoutube(rightState.inputPlaylist.id, searchResult.id.videoId)
+					youtube.addToYoutube(rightState.inputPlaylist.id, searchResult.id.videoId)
 				})
 			})
 		})
@@ -279,10 +185,10 @@ export default function Home() {
 		const spotifyPlaylistId = rightState.inputPlaylist.id
 
 		// get youtube songs
-		getYoutubeSongs(youtubePlaylistId).then((videos) => {
+		youtube.getYoutubeSongs(youtubePlaylistId).then((videos) => {
 			console.log("youtube videos:", videos)
 
-			videos.forEach((video: any) => {
+			for (const video of videos) {
 				const videoTitle = video.snippet.title
 
 				// search spotify for first result
@@ -292,7 +198,7 @@ export default function Home() {
 					// add to spotify playlist
 					addToSpotify(spotifyPlaylistId, searchResultUri)
 				})
-			})
+			}
 		})
 	}
 
@@ -329,7 +235,7 @@ export default function Home() {
 	}
 
 	return (
-		<GoogleOAuthProvider clientId={YOUTUBE_CLIENT_ID}>
+		<GoogleOAuthProvider clientId={YOUTUBE_CLIENT_ID!}>
 			<main className='min-h-screen flex flex-col justify-center items-center p-5'>
 				{/* title */}
 				<div className="text-center">

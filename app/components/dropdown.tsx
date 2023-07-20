@@ -1,15 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
-import Select, { ClassNamesConfig, ControlProps, MenuProps, OptionProps, SingleValue, components } from 'react-select';
+import Select, { ClassNamesConfig, MenuProps, OptionProps, SingleValue, components } from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 
 type Props = {
-    // playlists: Playlist[]
     currentState: PlatformState
-    // platform: string
-    // inputValue: Playlist | null
-    // setInput: React.Dispatch<React.SetStateAction<string>>
     setState: Function
 }
 
@@ -20,7 +16,7 @@ const selectClasses: ClassNamesConfig<Playlist, false> = {
             'rounded-full pr-5 pl-11 py-3 h-12 transition',
             state.isFocused ? 'border-gradient' : 'border-none',
         ),
-    menu: () => 'rounded-2xl bg-gray-800 p-2 mt-3',
+    menu: () => 'rounded-2xl bg-gray-800 p-2 mt-3 z-100',
     option: (state) => clsx(
         'hover:bg-gray-900 w-full rounded-xl py-2 px-3 transition',
         state.isSelected && "font-semibold"
@@ -28,14 +24,9 @@ const selectClasses: ClassNamesConfig<Playlist, false> = {
 }
 
 const Dropdown = ({ currentState, setState }: Props) => {
-
     const getOptionLabelValue = (playlist: Playlist) => {
         return playlist.snippet ? playlist.snippet.title : playlist.name
     }
-
-    useEffect(() => {
-        console.log("currentstate:", currentState)
-    }, [])
 
     const Menu = ({ children, ...props }: MenuProps<Playlist, false>) => {
         return (
@@ -82,7 +73,7 @@ const Dropdown = ({ currentState, setState }: Props) => {
             }
         })
 
-        console.log("new:", currentState.inputPlaylist)
+        console.log("new:", newValue)
     }
 
     return (
@@ -98,7 +89,6 @@ const Dropdown = ({ currentState, setState }: Props) => {
                 unstyled
                 isClearable
                 isSearchable
-                // inputValue={actualInput} // takes away ability to type
                 placeholder={<p className='text-gray-500'>Find a playlist...</p>}
                 className='text-white bg-gray-800 rounded-full tracking-wide max-w-xs w-100'
                 classNames={selectClasses}

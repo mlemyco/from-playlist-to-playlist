@@ -1,14 +1,11 @@
 import React, { ForwardedRef, forwardRef } from 'react'
+import Image from 'next/image'
 import Dropdown from './dropdown'
 import { motion } from 'framer-motion'
 
 type Props = {
     children: React.ReactNode
-    // playlists: Playlist[]
-    // platform: string
-    // inputValue: Playlist | null
     currentState: PlatformState
-    // setInput: React.Dispatch<React.SetStateAction<string>>
     setState: Function
 }
 
