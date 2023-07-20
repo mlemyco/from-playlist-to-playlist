@@ -10,8 +10,8 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import GoogleLogin from './components/googleLogin';
 import YoutubeAPI from '@/lib/youtube';
 
-const SPOTIFY_CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID
-const YOUTUBE_CLIENT_ID = process.env.NEXT_PUBLIC_YOUTUBE_CLIENT_ID
+const SPOTIFY_CLIENT_ID = "fe857598d4c34d3ca6482dcc931e6a4f"
+const YOUTUBE_CLIENT_ID = "697515204862-mnj2nvbj1aurd2ldodlf1tucqk87es00.apps.googleusercontent.com"
 
 console.log(SPOTIFY_CLIENT_ID)
 console.log(YOUTUBE_CLIENT_ID)
