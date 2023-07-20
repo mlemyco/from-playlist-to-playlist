@@ -128,6 +128,12 @@ export default function Home() {
 						playlists: actualPlaylists.items,
 					}
 					setLeftState(newState)
+				} else {
+					const newState = {
+						...rightState,
+						playlists: actualPlaylists.items,
+					}
+					setRightState(newState)
 				}
 			})
 		} else {
