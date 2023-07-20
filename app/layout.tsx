@@ -17,11 +17,9 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={inter.className}>
+                <Script src="https://kit.fontawesome.com/315845a82f.js" crossOrigin="anonymous"></Script>
                 
                 {children}
-                
-                <Script src="https://kit.fontawesome.com/315845a82f.js" crossOrigin="anonymous"></Script>
-                {/* <script src="https://accounts.google.com/gsi/client" async></script> */}
             </body>
         </html>
     )
