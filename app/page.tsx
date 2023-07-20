@@ -193,6 +193,7 @@ export default function Home() {
 
 				// search spotify for first result
 				spotify.search(videoTitle, ["track"]).then((response) => {
+
 					const searchResultUri = response.tracks!.items[0].uri
 
 					// add to spotify playlist

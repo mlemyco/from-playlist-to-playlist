@@ -33,7 +33,7 @@ export default class YoutubeAPI {
     
     
     async getYoutubeSongs(playlistId: string) {
-        return axios.get(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=id%2Csnippet&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}`, {
+        return axios.get(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=id%2Csnippet&playlistId=${playlistId}&maxResults=50&key=${YOUTUBE_API_KEY}`, {
             headers: {
                 Authorization: `Bearer ${this.accessToken}`,
                 Accept: 'application/json'
