@@ -194,7 +194,7 @@ export default function Home() {
 		youtube.getYoutubeSongs(youtubePlaylistId).then((videos) => {
 			console.log("youtube videos:", videos)
 
-			for (const video of videos) {
+			videos.forEach((video: YoutubeTrack) => {
 				const videoTitle = video.snippet.title
 
 				// search spotify for first result
@@ -205,7 +205,7 @@ export default function Home() {
 					// add to spotify playlist
 					addToSpotify(spotifyPlaylistId, searchResultUri)
 				})
-			}
+			})
 		})
 	}
 
